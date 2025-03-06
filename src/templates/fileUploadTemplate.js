@@ -1,5 +1,12 @@
 export const fileUploadTemplate = `
   <style>
+   .upload-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh; 
+      background: rgba(0, 0, 0, 0.5); 
+    }
     .upload-container {
       position: relative;
       width: 302px;
@@ -82,49 +89,46 @@ export const fileUploadTemplate = `
       max-width: 100%;
       height: auto;
     }
-
+    
     .progress-container {
-      position: relative;
-      width: 277px;
-      margin: 10px 0;
-      display: none; 
+      position: absolute;
+      bottom: 5px;
+      left: 40px;
+      width: 100%;
+      display: none;
     }
 
     .progress-container.visible {
-       position: absolute;
-       bottom: -5px;
-        left: 50%; 
-        transform: translateX(-50%); 
-        display: flex;
-        width: 30%; 
-        align-items: center; 
-        padding: 5px 10px; 
-        box-sizing: border-box; 
-}
-   
-    .progress-container progress {
-    flex-grow: 1;
-    height: 10px;
-    border-radius: 5px;
-    background: rgb(241, 241, 241);
-}
+      display: block;
+    }
 
+    progress {
+          height: 5px;
+          margin-top: 25px;
+          border: none;
+          background-color: rgb(255, 255, 255);;
+        }
 
-   .progress-container progress::-webkit-progress-bar {
-    background: rgb(33,93,173);
-    border-radius: 5px;
-}
+        progress::-webkit-progress-bar {
+          border: none;
+          background-color: rgb(255, 255, 255);
+        }
 
-   .progress-container progress::-webkit-progress-value {
-    background: rgb(95, 92, 240);
-    border-radius: 5px;
-}
+        progress::-webkit-progress-value {
+          background-color: rgb(95, 92, 240);;
+          transition: width 0.5s ease-in-out;
+        }
 
-    .progress-container.hidden {
-      opacity: 0;
-      pointer-events: none;
-      }
-      
+        progress::-moz-progress-bar {
+          border: none;
+          background-color: rgb(95, 92, 240);;
+        }
+
+        .form-upload__container {
+          margin-top: 10px;
+          font-size: 16px;
+        }
+
     .cancel-upload {
       width: 20px;
       height: 20px;
@@ -138,17 +142,17 @@ export const fileUploadTemplate = `
     }
 
     .clear-input {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.3s;
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.3s;
     }
-    
+
     .clear-input:hover {
       opacity: 1;
     }
@@ -162,13 +166,12 @@ export const fileUploadTemplate = `
       padding: 16px 0;
       border: none;
       border-radius: 30px;
-     background: rgb(95, 92, 240);
+      background: rgb(95, 92, 240);
       color: white;
       cursor: pointer;
       transition: background-color 0.3s;
       margin-top: 20px;
     }
-    
 
     .button:hover {
       background-color: rgba(165, 165, 165, 0.8);
@@ -193,40 +196,97 @@ export const fileUploadTemplate = `
       color: rgb(0, 123, 255);
     }
 
+    /* Стили для модального окна */
+    .modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(180deg, rgb(95, 92, 240), rgb(143, 141, 244) 100%);
+      padding: 40px;
+      border-radius: 10px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .modal.active {
+      display: block;
+    }
+
+    .modal h3 {
+      margin: 0 0 10px 0;
+      color: rgb(255, 255, 255);
+    }
+
+    .modal p {
+      margin: 5px 0;
+      color: rgb(255, 255, 255);
+    }
+
+    .modal .close-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      border-radius: 17px;
+      background: rgba(204, 204, 206, 0.28);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 3px;
+    }
+
+    .modal.error {
+      background: linear-gradient(180deg, rgb(240, 92, 92), rgb(143, 141, 244) 100%);
+      border-radius: 22px;
+    }
+
     .hidden {
       display: none;
     }
-    
   </style>
-
+<div class="upload-wrapper">
   <div class="upload-container">
-    <img class="close-button" src="../../public/cross%20button.svg" alt="Закрыть окно"/>
+    <img class="close-button" src="/loading-window/cross%20button.svg" alt="Закрыть окно"/>
     <h1 class="title">Загрузочное окно</h1>
     <h2 class="upload-subtitle">Перенесите ваш файл в область ниже</h2>
 
     <!-- Инпут для названия файла -->
     <div class="input-container">
       <input type="text" id="name-input" placeholder="Название файла" required>
-      <img class="clear-input" src="../../public/+.svg" alt="Очистить поле" onclick="clearInput()"/>
-          <div class="progress-container hidden" id="progress-container">
-      <progress id="progress-bar" value="0" max="100"></progress>
-       <span id="uploadForm_Status"></span>
-       <span id="uploadForm_Size"></span>
-    </div>
+      <img class="clear-input" src="/loading-window/+.svg" alt="Очистить поле" onclick="clearInput()"/>
+      <div class="progress-container hidden" id="progress-container">
+        <progress id="progress-bar" value="0" max="100"></progress>
+        <span id="uploadForm_Status"></span>
+        <span id="uploadForm_Size"></span>
+      </div>
     </div>
 
     <!-- Область для переноса файла -->
     <div id="upload-zone" class="upload-zone">
       <label for="file-input" class="upload-zone_dragover">
-        <img src="../../public/docs%20pic.svg" alt="Загрузочное окно" id="preview" height="120px" />
+        <img src="/loading-window/docs%20pic.svg" alt="Загрузочное окно" id="preview" height="120px" />
         <p>Перенесите ваш файл в область ниже</p>
       </label>
       <input class="hidden" id="file-input" type="file" accept=".txt,.json,.csv" aria-describedby="hint">
     </div>
-   
+
     <button id="upload-button" class="button">Загрузить</button>
 
     <div id="message"></div>
     <div id="loading"></div>
+
+    <!-- Модальное окно -->
+    <div class="modal" id="upload-modal">
+      <img class="close-button" src="/loading-window/cross%20button.svg" alt="Закрыть окно"/>
+      <h3>Файл успешно загружен</h3>
+      <p id="modal-name"></p>
+      <p id="modal-filename"></p>
+      <p id="modal-timestamp"></p>
+      <p id="modal-message"></p>
+    </div>
   </div>
+   </div>
 `;
