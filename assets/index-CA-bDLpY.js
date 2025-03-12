@@ -4,8 +4,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh; 
-      background: rgba(0, 0, 0, 0.5); 
+      min-height: 100vh; /* Занимает всю высоту экрана */
+      background: rgba(0, 0, 0, 0.5); /* Полупрозрачный фон (опционально) */
     }
     .upload-container {
       position: relative;
