@@ -10,41 +10,49 @@ export class FileUploadComponent extends HTMLElement {
         shadow.innerHTML = fileUploadTemplate;
 
         // Элементы
-        this.uploadZone = shadow.getElementById('upload-zone');
-        this.fileInput = shadow.getElementById('file-input');
-        this.nameInput = shadow.getElementById('name-input');
-        this.uploadButton = shadow.getElementById('upload-button');
-        this.progressBar = shadow.getElementById('progress-bar');
-        this.message = shadow.getElementById('message');
-        this.loading = shadow.getElementById('loading');
-        this.closeButton = shadow.querySelector('.close-button');
-        this.clearInputButton = shadow.querySelector('.clear-input');
-        this.progressContainer = shadow.getElementById('progress-container');
-        this.inputContainer = shadow.querySelector('.input-container');
-        this.sizeText = shadow.getElementById('uploadForm_Size'); // Элемент для отображения размера
-        this.statusText = shadow.getElementById('uploadForm_Status');
+        this.elements = {
+            uploadZone: shadow.getElementById("upload-zone"),
+            fileInput: shadow.getElementById("file-input"),
+            nameInput: shadow.getElementById("name-input"),
+            uploadButton: shadow.getElementById("upload-button"),
+            progressBar: shadow.getElementById("progress-bar"),
+            message: shadow.getElementById("message"),
+            loading: shadow.getElementById("loading"),
+            closeButton: shadow.querySelector(".close-button"),
+            clearInputButton: shadow.querySelector(".clear-input"),
+            progressContainer: shadow.getElementById("progress-container"),
+            inputContainer: shadow.querySelector(".input-container"),
+            sizeText: shadow.getElementById("uploadForm_Size"),
+            statusText: shadow.getElementById("uploadForm_Status"),
+            modal: shadow.getElementById("upload-modal"),
+            modalCloseButton: shadow.getElementById("modal-close-button"),
+        };
 
-        this.uploadButton.disabled = true;
+        this.elements.uploadButton.disabled = true;
 
         // Обработчики событий
-        this.nameInput.addEventListener('input', () => this.validateForm());
-        this.fileInput.addEventListener('change', () => this.handleFileSelect(this.fileInput.files[0]));
-        this.uploadButton.addEventListener('click', () => this.handleUpload());
-        this.closeButton.addEventListener('click', () => this.closeUploadWindow());
-        this.clearInputButton.addEventListener('click', () => this.clearInput());
+        this.elements.nameInput.addEventListener("change", () => this.validateForm());
+        this.elements.fileInput.addEventListener("change", () =>
+            this.handleFileSelect(this.elements.fileInput.files[0])
+        );
+        this.elements.uploadButton.addEventListener("click", () => this.handleUpload());
+        this.elements.closeButton.addEventListener("click", () =>
+            this.closeUploadWindow()
+        );
+        this.elements.clearInputButton.addEventListener("click", () => this.clearInput());
         this.setupDragAndDrop();
     }
 
-    updateProgress(percentComplete) {
-        if (percentComplete === null) {
-            this.statusText.textContent = 'Загружается...';
-            this.sizeText.textContent = '';
-            this.progressBar.value = 0;
+    // Обновление прогресса
+    updateProgress(loaded, total) {
+        if (typeof loaded !== "number" || typeof total !== "number" || total <= 0) {
+            console.error("Некорректные значения loaded или total");
             return;
         }
 
-        this.progressBar.value = percentComplete;
-        this.statusText.textContent = `Загружено ${Math.round(percentComplete)}% | `;
+        const percentComplete = Math.round((loaded / total) * 100);
+        this.elements.progressBar.value = percentComplete;
+        this.elements.statusText.textContent = `${percentComplete}% `;
     }
 
     // Закрытие окна
@@ -54,7 +62,7 @@ export class FileUploadComponent extends HTMLElement {
 
     // Очистка инпута
     clearInput() {
-        this.nameInput.value = '';
+        this.elements.nameInput.value = "";
         this.validateForm();
     }
 
@@ -65,40 +73,59 @@ export class FileUploadComponent extends HTMLElement {
             e.stopPropagation();
         };
 
-        this.uploadZone.addEventListener('dragenter', preventDefault);
-        this.uploadZone.addEventListener('dragover', preventDefault);
-        this.uploadZone.addEventListener('dragleave', preventDefault);
+        this.elements.uploadZone.addEventListener("dragenter", preventDefault);
+        this.elements.uploadZone.addEventListener("dragover", preventDefault);
+        this.elements.uploadZone.addEventListener("dragleave", preventDefault);
 
-        this.uploadZone.addEventListener('drop', (e) => {
+        this.elements.uploadZone.addEventListener("drop", (e) => {
             preventDefault(e);
             const file = e.dataTransfer.files[0];
             this.handleFileSelect(file);
+        });
+
+        this.elements.uploadZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const file = e.dataTransfer.items[0].getAsFile();
+            if (file && !this.validateFile(file)) {
+                this.elements.uploadZone.classList.add("invalid");
+                this.elements.message.textContent = "Недопустимый тип файла.";
+            } else {
+                this.elements.uploadZone.classList.remove("invalid");
+                this.elements.message.textContent = "";
+            }
         });
     }
 
     // Валидация формы
     validateForm() {
-        const isNameValid = this.nameInput.value.trim() !== '';
+        const isNameValid = this.elements.nameInput.value.trim() !== "";
         const isFileValid = this.file !== undefined;
 
         if (isNameValid && isFileValid) {
-            this.uploadZone.insertAdjacentElement('afterend', this.inputContainer);
-            this.progressContainer.classList.remove('hidden');
-            this.progressContainer.classList.add('visible');
+            this.elements.uploadZone.insertAdjacentElement(
+                "afterend",
+                this.elements.inputContainer
+            );
+            this.elements.progressContainer.classList.remove("hidden");
+            this.elements.progressContainer.classList.add("visible");
         }
 
-        this.uploadButton.disabled = !(isNameValid && isFileValid);
+        this.elements.uploadButton.disabled = !(isNameValid && isFileValid);
     }
 
     // Проверка файла
     validateFile(file) {
-        const allowedTypes = ['text/plain', 'application/json', 'text/csv'];
+        const allowedTypes = ["text/plain", "application/json", "text/csv"];
         if (!allowedTypes.includes(file.type)) {
-            this.message.textContent = 'Недопустимый тип файла. Разрешены только .txt, .json, .csv.';
+            this.elements.message.textContent =
+                "Недопустимый тип файла. Разрешены только .txt, .json, .csv.";
             return false;
         }
         if (file.size > 1024) {
-            this.message.textContent = 'Файл слишком большой. Максимальный размер: 1 KB.';
+            this.elements.message.textContent =
+                "Файл слишком большой. Максимальный размер: 1 KB.";
             return false;
         }
         return true;
@@ -108,56 +135,104 @@ export class FileUploadComponent extends HTMLElement {
     handleFileSelect(file) {
         if (this.validateFile(file)) {
             this.file = file;
-            this.message.textContent = `Выбран файл: ${file.name}`;
-            this.validateForm(); // Проверяем условия после выбора файла
+            this.elements.message.textContent = `Выбран файл: ${file.name}`;
+            this.elements.progressContainer.classList.remove("hidden");
+            this.validateForm();
         }
     }
 
     // Загрузка файла
     async handleUpload() {
         const file = this.file;
-        const name = this.nameInput.value.trim();
+        const name = this.elements.nameInput.value.trim();
 
         if (!file || !name) {
-            this.message.textContent = 'Пожалуйста, заполните все поля.';
+            this.elements.message.textContent = "Пожалуйста, заполните все поля.";
             return;
         }
 
-        this.loading.classList.remove('hidden');
-        this.progressContainer.classList.remove('hidden');
-        this.uploadButton.disabled = true;
+        this.elements.loading.classList.remove("hidden");
+        this.elements.progressContainer.classList.remove("hidden");
+        this.elements.uploadButton.disabled = true;
 
         try {
-            await uploadFile(
+            const response = await uploadFile(
                 file,
                 name,
-                (percentComplete) => {
-                    this.updateProgress(percentComplete); // Обновляем прогресс
-                    if (percentComplete === 100) {
-                        this.uploadButton.disabled = false; // Активируем кнопку после завершения
-                    }
-                }
+                (loaded, total) => this.updateProgress(loaded, total) // Передаем loaded и total
             );
 
-            this.message.textContent = 'Файл успешно загружен!';
+            this.showModal(response);
             this.resetForm();
         } catch (error) {
-            this.message.textContent = `Ошибка: ${error.message}`;
+            this.elements.message.textContent = `Ошибка: ${error.message}`;
+            this.showModal(
+                {
+                    message: error.message,
+                },
+                true
+            );
         } finally {
-            this.loading.classList.add('hidden');
+            this.elements.loading.classList.add("hidden");
         }
     }
 
-    // Сброс формы
+    // Отображение модального окна
+    showModal(response, isError = false) {
+        const { name, filename, timestamp, message } = response;
+
+        // Извлекаем расширение файла
+        const fileExtension = filename.split(".").pop();
+
+        // Обновляем текстовое содержимое модального окна
+        this.elements.modal.querySelector("#modal-name").textContent = `Name: ${name}`;
+        this.elements.modal.querySelector(
+            "#modal-filename"
+        ).textContent = `File Extension: .${fileExtension}`;
+        this.elements.modal.querySelector(
+            "#modal-timestamp"
+        ).textContent = `Timestamp: ${timestamp}`;
+        this.elements.modal.querySelector(
+            "#modal-message"
+        ).textContent = `Message: ${message}`;
+
+        if (isError) {
+            this.elements.modal.querySelector("h3").textContent =
+                "Ошибка в загрузке файла";
+            this.elements.modal.classList.add("error");
+        } else {
+            this.elements.modal.querySelector("h3").textContent =
+                "Файл успешно загружен";
+            this.elements.modal.classList.remove("error");
+        }
+
+        // Показываем модальное окно
+        this.elements.modal.classList.remove("hidden");
+        this.elements.modal.classList.add("active");
+
+        // Закрытие модального окна
+        this.elements.modalCloseButton = this.elements.modal.querySelector(
+            ".close-button"
+        );
+        this.elements.modalCloseButton.addEventListener("click", () =>
+            this.closeModal()
+        );
+    }
+
+    closeModal() {
+        this.elements.modal.classList.remove("active");
+        this.elements.modal.classList.add("hidden");
+    }
+
     resetForm() {
-        this.fileInput.value = '';
-        this.nameInput.value = '';
+        this.elements.fileInput.value = "";
+        this.elements.nameInput.value = "";
         this.file = undefined;
-        this.progressBar.value = 0;
-        this.message.textContent = '';
-        this.uploadButton.disabled = true;
-        this.progressContainer.classList.add('hidden');
-        this.sizeText.textContent = '';
-        this.statusText.textContent = '';
+        this.elements.progressBar.value = 0;
+        this.elements.message.textContent = "";
+        this.elements.uploadButton.disabled = true;
+        this.elements.progressContainer.classList.add("hidden");
+        this.elements.sizeText.textContent = "";
+        this.elements.statusText.textContent = "";
     }
 }
