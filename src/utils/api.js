@@ -1,3 +1,4 @@
+
 const API_URL = 'https://file-upload-server-mc26.onrender.com/api/v1/upload';
 
 export function uploadFile(file, name, onProgress) {
@@ -11,11 +12,10 @@ export function uploadFile(file, name, onProgress) {
 
         xhr.upload.onprogress = (e) => {
             if (e.lengthComputable && e.total > 0) {
-                const percentComplete = (e.loaded / e.total) * 100;
-                onProgress(percentComplete); // Передаём только процент
+                onProgress(e.loaded, e.total); // Передаем loaded и total
             } else {
                 console.warn('Невозможно вычислить прогресс: размер файла неизвестен');
-                onProgress(null); // Передаём null, если размер неизвестен
+                onProgress(0, 1); // Передаем значения по умолчанию
             }
         };
 
